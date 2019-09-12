@@ -24,22 +24,22 @@ passport.deserializeUser((id, done) => {
 passport.use(
     new GoogleStrategy(
         {
-        clientID: keys.googleClientID,
-        clientSecret: keys.googleClientSecret,
-        callbackURL: '/auth/google/callback',
-        proxy: true
+            clientID: keys.googleClientID,
+            clientSecret: keys.googleClientSecret,
+            callbackURL: '/auth/google/callback',
+            proxy: true
         }, 
-        (accessToken, refreshToken, profile, done) => {
+        async (accessToken, refreshToken, profile, done) => {
             //look through MongoDB to query if a google ID already exists
-            User.findOne({ googleId: profile.id }).then(existingUser => {
-                if (existingUser) {
-                    // we already have a record with the profile ID
-                    done(null, existingUser);
-                } else {
-                    // we don't have a record with the profile ID, make a new one
-                    new User({ googleId: profile.id }).save().then(user => done(null, user));
-                }
-            });
+            const existingUser = await User.findOne({ googleId: profile.id });
+            
+            if (existingUser) {
+                // we already have a record with the profile ID
+                return done(null, existingUser);
+            }
+                // we don't have a record with the profile ID, make a new one
+            const user = await new User({ googleId: profile.id }).save();
+            done(null, user);
         }
-    )
+    )   
 );
